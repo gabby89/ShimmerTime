@@ -44,6 +44,34 @@ local function SendRandomShimmerQuote()
     end
 end
 
+local function ResetDefaults()
+    ShimmerTimeDB = ShimmerTimeDB or {}
+    ShimmerTimeDB.emoteSize = DS.DEFAULT_EMOTE_SIZE
+    ShimmerTimeDB.minimapAngle = 225
+    ShimmerTimeDB.showEmotesInBubbles = false
+    ShimmerTimeDB.showGifsInBubbles = false
+    ShimmerTimeDB.playEmoteSounds = false
+
+    ShimmerTimeDB.enabledSections = {}
+    if DS.CATEGORIES then
+        for _, category in ipairs(DS.CATEGORIES) do
+            local key = category.key or category.name
+            ShimmerTimeDB.enabledSections[key] = category.enabledByDefault == true
+        end
+    end
+
+    ShimmerTimeDB.enabledChatChannels = {}
+    if DS.CHAT_CHANNEL_OPTIONS then
+        for _, option in ipairs(DS.CHAT_CHANNEL_OPTIONS) do
+            ShimmerTimeDB.enabledChatChannels[option.key] = true
+        end
+    end
+
+    if DS.UpdateMinimapButtonPosition then
+        DS.UpdateMinimapButtonPosition()
+    end
+end
+
 local function RegisterSlashCommands()
     SLASH_SHIMMER1 = "/shimmer"
     SLASH_SHIMMER2 = "/ds"
@@ -55,27 +83,18 @@ local function RegisterSlashCommands()
             PlaySoundFile(DS.SHIMMER_SOUND, "Master")
         elseif msg == "options" or msg == "config" then
             DS.OpenOptions()
-        elseif msg == "reset" or msg == "resetminimap" then
-            ShimmerTimeDB.minimapAngle = 225
-            if DS.UpdateMinimapButtonPosition then
-                DS.UpdateMinimapButtonPosition()
-            end
-            print("|cffffd100ShimmerTime:|r minimap button position reset.")
-        elseif msg == "menu" or msg == "emotes" then
-            if DS.minimapButton then
-                DS.ToggleEmoteMenu(DS.minimapButton)
-            end
-        elseif msg == "list" then
-            print("|cffffd100ShimmerTime emotes:|r")
-            for _, category in ipairs(DS.CATEGORIES) do
-                local status = DS.IsCategoryEnabled(category) and "enabled" or "disabled"
-                print("|cffffd100" .. category.name .. "|r (" .. status .. ")")
-                for _, emote in ipairs(category.emotes) do
-                    print(" - " .. emote.key)
-                end
-            end
+        elseif msg == "reset" then
+            ResetDefaults()
+            print("|cffffd100ShimmerTime:|r settings reset to default.")
+        elseif msg == "help" then
+            print("|cffffd100ShimmerTime commands:|r")
+            print("/shimmer - play the shimmer sound")
+            print("/shimmer options or /shimmer config - open addon options")
+            print("/shimmer reset - reset addon settings to defaults")
+            print("/shimmer help - show this help message")
+            print("/shimmerquote - send a random Shimmer out-of-context quote")
         else
-            print("|cffffd100ShimmerTime commands:|r /shimmer, /shimmerquote, /shimmer options, /shimmer menu, /shimmer reset, /shimmer list")
+            print("|cffffd100ShimmerTime:|r unknown command. Use /shimmer help")
         end
     end
 

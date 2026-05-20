@@ -62,6 +62,107 @@ local function TextureTag(texture, size)
     return ("|T%s:%d:%d:0:0|t"):format(texture, size, size)
 end
 
+local function CreateAnimatedEmoteFrame()
+    if DS.animatedEmoteFrame then
+        return
+    end
+
+    local frame = CreateFrame("Frame", "ShimmerTimeAnimatedEmoteFrame", UIParent)
+    frame:SetFrameStrata("FULLSCREEN_DIALOG")
+    frame.texture = frame:CreateTexture(nil, "ARTWORK")
+    frame.texture:SetAllPoints(frame)
+    frame:Hide()
+    DS.animatedEmoteFrame = frame
+end
+
+local function PreloadAnimatedEmoteTextures()
+    if DS.preloadTextures then
+        return
+    end
+
+    CreateAnimatedEmoteFrame()
+
+    local frame = CreateFrame("Frame", nil, UIParent)
+    frame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", -1000, 1000)
+    frame:SetSize(1, 1)
+    frame:Show()
+
+    DS.preloadTextures = {}
+
+    for _, category in ipairs(DS.CATEGORIES) do
+        if category.emotes then
+            for _, emote in ipairs(category.emotes) do
+                if emote.frames then
+                    for _, path in ipairs(emote.frames) do
+                        local texture = frame:CreateTexture(nil, "BACKGROUND")
+                        texture:SetTexture(path)
+                        texture:SetAllPoints(frame)
+                        texture:Show()
+                        table.insert(DS.preloadTextures, texture)
+                    end
+                end
+            end
+        end
+    end
+
+    -- Force a real texture load for the first animated emote frame.
+    for _, category in ipairs(DS.CATEGORIES) do
+        if category.emotes then
+            for _, emote in ipairs(category.emotes) do
+                if emote.frames and #emote.frames > 0 then
+                    DS.animatedEmoteFrame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", -1000, 1000)
+                    DS.animatedEmoteFrame:SetSize(1, 1)
+                    DS.animatedEmoteFrame.texture:SetTexture(emote.frames[1])
+                    DS.animatedEmoteFrame:Show()
+                    DS.animatedEmoteFrame:Hide()
+                    return
+                end
+            end
+        end
+    end
+end
+
+local currentEmoteSoundHandle
+local function ResetEmoteSoundHandle(handle)
+    if currentEmoteSoundHandle == handle then
+        currentEmoteSoundHandle = nil
+    end
+end
+
+local function PlayEmoteSound(emote)
+    if not ShimmerTimeDB or ShimmerTimeDB.playEmoteSounds ~= true then
+        return
+    end
+
+    if currentEmoteSoundHandle then
+        return
+    end
+
+    if emote and emote.sound then
+        local handle = PlaySoundFile(emote.sound, "Master")
+        if handle then
+            currentEmoteSoundHandle = handle
+            C_Timer.After(6, function()
+                ResetEmoteSoundHandle(handle)
+            end)
+        end
+    end
+end
+
+local function GetAnimatedEmoteAnchor()
+    local editBox = ChatEdit_GetActiveWindow()
+    if editBox and editBox:IsShown() then
+        return editBox
+    end
+
+    local chatFrame = _G["ChatFrame1"]
+    if chatFrame and chatFrame:IsShown() then
+        return chatFrame
+    end
+
+    return UIParent
+end
+
 local lastAnimatedEmote = {}
 function DS.PlayAnimatedEmote(emote)
     if not emote or not emote.frames or #emote.frames == 0 then
@@ -74,20 +175,25 @@ function DS.PlayAnimatedEmote(emote)
     end
     lastAnimatedEmote[emote.key] = now
 
-    if not DS.animatedEmoteFrame then
-        local frame = CreateFrame("Frame", "ShimmerTimeAnimatedEmoteFrame", UIParent)
-        frame:SetFrameStrata("FULLSCREEN_DIALOG")
-        frame:SetSize(128, 128)
-        frame:SetPoint("CENTER", UIParent, "CENTER", 0, 120)
-        frame.texture = frame:CreateTexture(nil, "ARTWORK")
-        frame.texture:SetAllPoints(frame)
-        frame:Hide()
-        DS.animatedEmoteFrame = frame
-    end
+    CreateAnimatedEmoteFrame()
 
     local frame = DS.animatedEmoteFrame
+    if frame:GetScript("OnUpdate") then
+        frame:SetScript("OnUpdate", nil)
+    end
+    frame:Hide()
+
     local size = math.max(96, ((ShimmerTimeDB and ShimmerTimeDB.emoteSize) or DS.DEFAULT_EMOTE_SIZE) * 3)
     frame:SetSize(size, size)
+
+    local anchor = GetAnimatedEmoteAnchor()
+    frame:ClearAllPoints()
+    if anchor == UIParent then
+        frame:SetPoint("CENTER", UIParent, "CENTER", 0, 200)
+    else
+        frame:SetPoint("BOTTOMLEFT", anchor, "TOPLEFT", 0, 10)
+    end
+
     frame.frames = emote.frames
     frame.frameDuration = emote.frameDuration or 0.08
     frame.elapsed = 0
@@ -123,11 +229,19 @@ end
 
 local function IsBubbleEmotesEnabled()
     if not ShimmerTimeDB or ShimmerTimeDB.showEmotesInBubbles == nil then
-        return true
+        return false
     end
     return ShimmerTimeDB.showEmotesInBubbles == true
 end
 DS.IsBubbleEmotesEnabled = IsBubbleEmotesEnabled
+
+local function IsGifBubbleEmotesEnabled()
+    if not ShimmerTimeDB or ShimmerTimeDB.showGifsInBubbles == nil then
+        return false
+    end
+    return ShimmerTimeDB.showGifsInBubbles == true
+end
+DS.IsGifBubbleEmotesEnabled = IsGifBubbleEmotesEnabled
 
 local function FindBubbleFontString(frame)
     if not frame then
@@ -174,7 +288,7 @@ local function EnsureBubbleEmoteFrame(bubble)
 end
 
 function DS.ShowEmoteOnChatBubbles(emote, triggerText)
-    if not IsBubbleEmotesEnabled() or not emote or not triggerText then
+    if not emote or not triggerText or (not IsBubbleEmotesEnabled() and not IsGifBubbleEmotesEnabled()) then
         return
     end
 
@@ -191,7 +305,7 @@ function DS.ShowEmoteOnChatBubbles(emote, triggerText)
                     frame:SetSize(size, size)
                     frame:Show()
 
-                    if emote.frames and #emote.frames > 0 then
+                    if emote.frames and #emote.frames > 0 and IsGifBubbleEmotesEnabled() then
                         frame.frames = emote.frames
                         frame.frameDuration = emote.frameDuration or 0.08
                         frame.elapsed = 0
@@ -219,7 +333,7 @@ function DS.ShowEmoteOnChatBubbles(emote, triggerText)
 
                             self.texture:SetTexture(self.frames[self.index])
                         end)
-                    else
+                    elseif IsBubbleEmotesEnabled() then
                         frame.texture:SetTexture(GetEmoteTexture(emote))
                         frame:SetScript("OnUpdate", nil)
                         C_Timer.After(4, function()
@@ -227,6 +341,8 @@ function DS.ShowEmoteOnChatBubbles(emote, triggerText)
                                 frame:Hide()
                             end
                         end)
+                    else
+                        frame:Hide()
                     end
                 end
             end
@@ -255,13 +371,14 @@ local function ReplaceEmoteWords(message)
                 -- Plain trigger words only. This makes "cat1" work, but avoids matching inside longer words.
                 message = message:gsub("(%f[%w])(" .. key .. ")(%f[%W])", function(prefix, _, suffix)
                     if emote.frames then
-                        DS.PlayAnimatedEmote(emote)
-                        DS.ShowEmoteOnChatBubbles(emote, emote.key)
-                        -- Animated emotes are shown with the floating animation instead of an inline texture tag.
-                        -- This avoids invalid/raw texture strings appearing in chat if WoW cannot render the custom frame path inline.
-                        return prefix .. emote.key .. suffix
+                        if IsBubbleEmotesEnabled() then
+                            DS.ShowEmoteOnChatBubbles(emote, emote.key)
+                        end
+                        PlayEmoteSound(emote)
+                        return prefix .. TextureTag(GetEmoteTexture(emote)) .. suffix
                     end
                     DS.ShowEmoteOnChatBubbles(emote, emote.key)
+                    PlayEmoteSound(emote)
                     return prefix .. TextureTag(GetEmoteTexture(emote)) .. suffix
                 end)
             end
@@ -760,11 +877,8 @@ local function CreateOptions()
 
     local sectionCheckBoxes = {}
 
-    local checkAllSections = CreateSmallButton(panel, "Check All", 84, 22)
-    checkAllSections:SetPoint("LEFT", sectionsTitle, "RIGHT", 14, 0)
-
-    local uncheckAllSections = CreateSmallButton(panel, "Uncheck All", 96, 22)
-    uncheckAllSections:SetPoint("LEFT", checkAllSections, "RIGHT", 6, 0)
+    local toggleSectionSelection = CreateSmallButton(panel, "Toggle All", 84, 22)
+    toggleSectionSelection:SetPoint("LEFT", sectionsTitle, "RIGHT", 14, 0)
 
     local optionColumns = 3
     local sectionColumnWidth = 170
@@ -790,20 +904,19 @@ local function CreateOptions()
 
     local sectionRows = math.max(1, math.ceil(#DS.CATEGORIES / optionColumns))
 
-    checkAllSections:SetScript("OnClick", function()
+    toggleSectionSelection:SetScript("OnClick", function()
+        local allSelected = true
         for _, item in ipairs(sectionCheckBoxes) do
-            item.checkbox:SetChecked(true)
-            SaveCategoryEnabled(item.category, true)
+            if not item.checkbox:GetChecked() then
+                allSelected = false
+                break
+            end
         end
-        if DS.CloseMenus then
-            DS.CloseMenus()
-        end
-    end)
 
-    uncheckAllSections:SetScript("OnClick", function()
         for _, item in ipairs(sectionCheckBoxes) do
-            item.checkbox:SetChecked(false)
-            SaveCategoryEnabled(item.category, false)
+            local selected = not allSelected
+            item.checkbox:SetChecked(selected)
+            SaveCategoryEnabled(item.category, selected)
         end
         if DS.CloseMenus then
             DS.CloseMenus()
@@ -821,11 +934,8 @@ local function CreateOptions()
 
     local channelCheckBoxes = {}
 
-    local checkAllChannels = CreateSmallButton(panel, "Check All", 84, 22)
-    checkAllChannels:SetPoint("LEFT", channelsTitle, "RIGHT", 14, 0)
-
-    local uncheckAllChannels = CreateSmallButton(panel, "Uncheck All", 96, 22)
-    uncheckAllChannels:SetPoint("LEFT", checkAllChannels, "RIGHT", 6, 0)
+    local toggleChannelSelection = CreateSmallButton(panel, "Toggle All", 84, 22)
+    toggleChannelSelection:SetPoint("LEFT", channelsTitle, "RIGHT", 14, 0)
 
     local channelColumnWidth = 190
     for index, option in ipairs(CHAT_CHANNEL_OPTIONS) do
@@ -843,29 +953,133 @@ local function CreateOptions()
         channelCheckBoxes[index] = { checkbox = checkbox, option = option }
     end
 
-    checkAllChannels:SetScript("OnClick", function()
+    toggleChannelSelection:SetScript("OnClick", function()
+        local allSelected = true
         for _, item in ipairs(channelCheckBoxes) do
-            item.checkbox:SetChecked(true)
-            SaveChatChannelEnabled(item.option, true)
+            if not item.checkbox:GetChecked() then
+                allSelected = false
+                break
+            end
         end
-    end)
 
-    uncheckAllChannels:SetScript("OnClick", function()
         for _, item in ipairs(channelCheckBoxes) do
-            item.checkbox:SetChecked(false)
-            SaveChatChannelEnabled(item.option, false)
+            local selected = not allSelected
+            item.checkbox:SetChecked(selected)
+            SaveChatChannelEnabled(item.option, selected)
         end
     end)
 
     local channelRows = math.max(1, math.ceil(#CHAT_CHANNEL_OPTIONS / optionColumns))
-    local bubbleCheckbox = CreateFrame("CheckButton", "ShimmerTimeBubbleCheckbox", panel, "InterfaceOptionsCheckButtonTemplate")
-    bubbleCheckbox:SetPoint("TOPLEFT", channelDescription, "BOTTOMLEFT", 0, -10 - (channelRows * optionRowHeight) - 12)
-    bubbleCheckbox.Text:SetText("Show emotes in chat bubbles")
-    bubbleCheckbox.Text:SetTextColor(1, 0.82, 0)
-    bubbleCheckbox.tooltipText = "Show ShimmerTime emotes above in-world chat bubbles when their trigger words are used."
-    bubbleCheckbox:SetChecked(IsBubbleEmotesEnabled())
-    bubbleCheckbox:SetScript("OnClick", function(self)
-        ShimmerTimeDB.showEmotesInBubbles = self:GetChecked() == true
+
+    local miscTitle = panel:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
+    miscTitle:SetPoint("TOPLEFT", channelDescription, "BOTTOMLEFT", 0, -10 - (channelRows * optionRowHeight) - 18)
+    miscTitle:SetText("Misc")
+
+    local miscColumnWidth = 220
+    local miscOptions = {
+        {
+            name = "Emotes above chat bubbles",
+            getChecked = IsBubbleEmotesEnabled,
+            onClick = function(self)
+                ShimmerTimeDB.showEmotesInBubbles = self:GetChecked() == true
+            end,
+            frameName = "ShimmerTimeBubbleCheckbox",
+        },
+        {
+            name = "GIFs above chat bubbles",
+            getChecked = function()
+                return ShimmerTimeDB.showGifsInBubbles == true
+            end,
+            onClick = function(self)
+                ShimmerTimeDB.showGifsInBubbles = self:GetChecked() == true
+            end,
+            frameName = "ShimmerTimeGifBubbleCheckbox",
+        },
+        {
+            name = "Play emote sounds",
+            getChecked = function()
+                return ShimmerTimeDB.playEmoteSounds == true
+            end,
+            onClick = function(self)
+                ShimmerTimeDB.playEmoteSounds = self:GetChecked() == true
+            end,
+            frameName = "ShimmerTimeSoundCheckbox",
+        },
+    }
+
+    local miscCheckBoxes = {}
+    local miscToggleSelection = CreateSmallButton(panel, "Toggle All", 84, 22)
+    miscToggleSelection:SetPoint("LEFT", miscTitle, "RIGHT", 14, 0)
+
+    for index, option in ipairs(miscOptions) do
+        local checkbox = CreateFrame("CheckButton", option.frameName, panel, "InterfaceOptionsCheckButtonTemplate")
+        local column = (index - 1) % optionColumns
+        local row = math.floor((index - 1) / optionColumns)
+        checkbox:SetPoint("TOPLEFT", miscTitle, "BOTTOMLEFT", column * miscColumnWidth, -8 - (row * optionRowHeight))
+        checkbox.Text:SetText(option.name)
+        checkbox.Text:SetTextColor(1, 0.82, 0)
+        checkbox:SetChecked(option.getChecked())
+        checkbox:SetScript("OnClick", option.onClick)
+        table.insert(miscCheckBoxes, checkbox)
+    end
+
+    local function ApplyOptionDefaults()
+        slider:SetValue(ShimmerTimeDB.emoteSize or DS.DEFAULT_EMOTE_SIZE)
+        _G[slider:GetName() .. "Text"]:SetText("Chat Emote Size: " .. (ShimmerTimeDB.emoteSize or DS.DEFAULT_EMOTE_SIZE))
+
+        for _, item in ipairs(sectionCheckBoxes) do
+            item.checkbox:SetChecked(IsCategoryEnabled(item.category))
+        end
+
+        for _, item in ipairs(channelCheckBoxes) do
+            item.checkbox:SetChecked(IsChatChannelEnabled(item.option.events[1]))
+        end
+
+        for index, checkbox in ipairs(miscCheckBoxes) do
+            checkbox:SetChecked(miscOptions[index].getChecked())
+        end
+    end
+
+    local resetDefaultsButton = CreateSmallButton(panel, "Reset to Default", 112, 22)
+    resetDefaultsButton:SetPoint("TOPLEFT", miscTitle, "BOTTOMLEFT", 0, -72)
+    resetDefaultsButton:SetScript("OnClick", function()
+        ShimmerTimeDB.emoteSize = DS.DEFAULT_EMOTE_SIZE
+        ShimmerTimeDB.minimapAngle = 225
+        ShimmerTimeDB.showEmotesInBubbles = false
+        ShimmerTimeDB.showGifsInBubbles = false
+        ShimmerTimeDB.playEmoteSounds = false
+        ShimmerTimeDB.enabledSections = {}
+        for _, category in ipairs(DS.CATEGORIES) do
+            ShimmerTimeDB.enabledSections[GetCategoryKey(category)] = category.enabledByDefault == true
+        end
+        ShimmerTimeDB.enabledChatChannels = {}
+        for _, option in ipairs(CHAT_CHANNEL_OPTIONS) do
+            ShimmerTimeDB.enabledChatChannels[option.key] = true
+        end
+
+        ApplyOptionDefaults()
+        if DS.UpdateMinimapButtonPosition then
+            DS.UpdateMinimapButtonPosition()
+        end
+        if DS.CloseMenus then
+            DS.CloseMenus()
+        end
+    end)
+
+    miscToggleSelection:SetScript("OnClick", function()
+        local allSelected = true
+        for _, checkbox in ipairs(miscCheckBoxes) do
+            if not checkbox:GetChecked() then
+                allSelected = false
+                break
+            end
+        end
+
+        for _, checkbox in ipairs(miscCheckBoxes) do
+            local selected = not allSelected
+            checkbox:SetChecked(selected)
+            checkbox:GetScript("OnClick")(checkbox)
+        end
     end)
 
     if Settings and Settings.RegisterCanvasLayoutCategory then
@@ -919,7 +1133,15 @@ login:SetScript("OnEvent", function()
     end
 
     if ShimmerTimeDB.showEmotesInBubbles == nil then
-        ShimmerTimeDB.showEmotesInBubbles = true
+        ShimmerTimeDB.showEmotesInBubbles = false
+    end
+
+    if ShimmerTimeDB.showGifsInBubbles == nil then
+        ShimmerTimeDB.showGifsInBubbles = false
+    end
+
+    if ShimmerTimeDB.playEmoteSounds == nil then
+        ShimmerTimeDB.playEmoteSounds = false
     end
 
     for _, eventName in ipairs(CHAT_EVENTS) do
@@ -927,6 +1149,7 @@ login:SetScript("OnEvent", function()
     end
 
     CreateEmoteMenu()
+    PreloadAnimatedEmoteTextures()
     CreateOptions()
     CreateMinimapButton()
     if DS.RegisterSlashCommands then
