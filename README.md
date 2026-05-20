@@ -1,4 +1,4 @@
-# ShimmerTime v1.1.0
+# ShimmerTime v1.1.1
 
 Renamed from DimmerShimmer to ShimmerTime.
 
