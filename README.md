@@ -1,7 +1,5 @@
 # ShimmerTime v1.1.1
 
-Renamed from DimmerShimmer to ShimmerTime.
-
 Overview
 --------
 ShimmerTime adds Shimmer-themed emotes, GIFs, and pet icons to your WoW UI and gives you simple settings to enable or disable entire emote categories.
