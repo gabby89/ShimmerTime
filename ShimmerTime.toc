@@ -1,0 +1,12 @@
+## Interface: 120000
+## Title: ShimmerTime
+## Notes: ShimmerTime Guild emote and fun
+## Author: Gabbee-Thrall
+## Version: 1.0.1
+## IconTexture: Interface\AddOns\ShimmerTime\Emotes\icon
+## SavedVariables: ShimmerTimeDB, ShimmerDB
+
+Emotes.lua
+Quotes.lua
+Core.lua
+SlashCommands.lua
