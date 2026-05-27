@@ -2,38 +2,33 @@ local ADDON_NAME = ...
 ShimmerTime = ShimmerTime or {}
 local DS = ShimmerTime
 
+-- sectionGroup controls how options are grouped.
+-- menuParent/menuName controls how a category appears in the minimap dropdown.
 DS.CATEGORIES = {
-    {
-        name = "Dimmer",
-        enabledByDefault = false,
-        emotes = {
-            { key = "alt raid", texture = "Interface\\AddOns\\ShimmerTime\\Emotes\\altraid" },
-            { key = "bustin", texture = "Interface\\AddOns\\ShimmerTime\\Emotes\\bustin", sound = "Interface\\AddOns\\ShimmerTime\\Sounds\\bustin.wav" },
-            { key = "cream pie", texture = "Interface\\AddOns\\ShimmerTime\\Emotes\\cream" },
-            { key = "dimmer", texture = "Interface\\AddOns\\ShimmerTime\\Emotes\\dimmer" },
-            { key = "horse surgeon", texture = "Interface\\AddOns\\ShimmerTime\\Emotes\\horsesurgeon" },
-            { key = "lexi", texture = "Interface\\AddOns\\ShimmerTime\\Emotes\\lexi" },
-            { key = "milk it", texture = "Interface\\AddOns\\ShimmerTime\\Emotes\\milkit" },
-            
-        },
-    },
+    -- Shimmer sections: default ON
     {
         name = "Shimmer",
+        key = "Shimmer Emotes",
+        optionName = "Emotes",
+        sectionGroup = "Shimmer Sections",
         enabledByDefault = true,
         emotes = {
-            { key = "apride", texture = "Interface\\AddOns\\ShimmerTime\\Emotes\\alliancepride", sound = "Interface\\AddOns\\ShimmerTime\\Sounds\\gay.wav" },
-            { key = "birds", texture = "Interface\\AddOns\\ShimmerTime\\Emotes\\birds", sound = "Interface\\AddOns\\ShimmerTime\\Sounds\\birds.wav" },
-            { key = "couchman", texture = "Interface\\AddOns\\ShimmerTime\\Emotes\\couchman" },
-            { key = "hpride", texture = "Interface\\AddOns\\ShimmerTime\\Emotes\\hordepride", sound = "Interface\\AddOns\\ShimmerTime\\Sounds\\gay.wav" },
-            { key = "ice cream", texture = "Interface\\AddOns\\ShimmerTime\\Emotes\\icecream" },
-            { key = "shimmer", texture = "Interface\\AddOns\\ShimmerTime\\Emotes\\icon" },
-            { key = "wow token", texture = "Interface\\AddOns\\ShimmerTime\\Emotes\\wowtoken", sound = "Interface\\AddOns\\ShimmerTime\\Sounds\\money.wav" },
-
+            { key = "birds", texture = "Interface\\AddOns\\ShimmerTime\\Emotes\\birds.tga", sound = "Interface\\AddOns\\ShimmerTime\\Sounds\\birds.wav" },
+            { key = "couchman", texture = "Interface\\AddOns\\ShimmerTime\\Emotes\\couchman.tga" },
+            { key = "cottage cheese", texture = "Interface\\AddOns\\ShimmerTime\\Emotes\\cottagecheese.tga" },
+            { key = "ice cream", texture = "Interface\\AddOns\\ShimmerTime\\Emotes\\icecream.tga" },
+            { key = "pridea", texture = "Interface\\AddOns\\ShimmerTime\\Emotes\\alliancepride.tga", sound = "Interface\\AddOns\\ShimmerTime\\Sounds\\gay.wav" },
+            { key = "prideh", texture = "Interface\\AddOns\\ShimmerTime\\Emotes\\hordepride.tga", sound = "Interface\\AddOns\\ShimmerTime\\Sounds\\gay.wav" },
+            { key = "shimmer", texture = "Interface\\AddOns\\ShimmerTime\\Emotes\\icon.tga" },
+            { key = "wow token", texture = "Interface\\AddOns\\ShimmerTime\\Emotes\\wowtoken.tga", sound = "Interface\\AddOns\\ShimmerTime\\Sounds\\money.wav" },
         },
     },
     {
         name = "Shimmer Gifs",
-        enabledByDefault = false,
+        key = "Shimmer Gifs",
+        optionName = "Gifs",
+        sectionGroup = "Shimmer Sections",
+        enabledByDefault = true,
         emotes = {
             {
                 key = "pascal",
@@ -118,13 +113,105 @@ DS.CATEGORIES = {
     },
     {
         name = "Shimmer Pets",
+        key = "Shimmer Pets",
+        optionName = "Pets",
+        sectionGroup = "Shimmer Sections",
         enabledByDefault = true,
         emotes = {
-            { key = "kyber", texture = "Interface\\AddOns\\ShimmerTime\\Emotes\\kyber" },
-            { key = "lilly", texture = "Interface\\AddOns\\ShimmerTime\\Emotes\\lilly" },
-            { key = "rebel", texture = "Interface\\AddOns\\ShimmerTime\\Emotes\\rebel" },
-            { key = "rudy", texture = "Interface\\AddOns\\ShimmerTime\\Emotes\\rudy" },
+            { key = "kyber", texture = "Interface\\AddOns\\ShimmerTime\\Emotes\\kyber.tga" },
+            { key = "lilly", texture = "Interface\\AddOns\\ShimmerTime\\Emotes\\lilly.tga" },
+            { key = "rebel", texture = "Interface\\AddOns\\ShimmerTime\\Emotes\\rebel.tga" },
+            { key = "rudy", texture = "Interface\\AddOns\\ShimmerTime\\Emotes\\rudy.tga" },
+        },
+    },
+
+    -- Dimmer sections: default OFF
+    {
+        name = "Dimmer",
+        key = "Dimmer Emotes",
+        optionName = "Emotes",
+        sectionGroup = "Dimmer Sections",
+        enabledByDefault = false,
+        emotes = {
+            { key = "alt raid", texture = "Interface\\AddOns\\ShimmerTime\\Emotes\\altraid.tga" },
+            { key = "bustin", texture = "Interface\\AddOns\\ShimmerTime\\Emotes\\bustin.tga", sound = "Interface\\AddOns\\ShimmerTime\\Sounds\\bustin.wav" },
+            { key = "cream pie", texture = "Interface\\AddOns\\ShimmerTime\\Emotes\\cream.tga" },
+            { key = "dimmer", texture = "Interface\\AddOns\\ShimmerTime\\Emotes\\dimmer.tga" },
+            { key = "femboy", texture = "Interface\\AddOns\\ShimmerTime\\Emotes\\femboy.tga" },
+            { key = "horse surgeon", texture = "Interface\\AddOns\\ShimmerTime\\Emotes\\horsesurgeon.tga" },
+            { key = "lexi", texture = "Interface\\AddOns\\ShimmerTime\\Emotes\\lexi.tga" },
+            { key = "milk it", texture = "Interface\\AddOns\\ShimmerTime\\Emotes\\milkit.tga" },
+        },
+    },
+
+    -- Dimmer NSFW sections: default OFF
+    {
+        name = "NSFW Emotes",
+        key = "Dimmer NSFW Emotes",
+        optionName = "Emotes",
+        sectionGroup = "Dimmer NSFW Sections",
+        menuParent = "Dimmer NSFW",
+        menuName = "Emotes",
+        priority = 100,
+        enabledByDefault = false,
+        emotes = {
+            { key = "cottage cheese", texture = "Interface\\AddOns\\ShimmerTime\\Emotes\\cottagecheese.tga", sound = "Interface\\AddOns\\ShimmerTime\\Sounds\\cottagecheese.wav" },
+            { key = "femboy", texture = "Interface\\AddOns\\ShimmerTime\\Emotes\\femboy.tga", sound = "Interface\\AddOns\\ShimmerTime\\Sounds\\femboy.wav" },
+        },
+    },
+    {
+        name = "NSFW Gifs",
+        key = "Dimmer NSFW Gifs",
+        optionName = "Gifs",
+        sectionGroup = "Dimmer NSFW Sections",
+        menuParent = "Dimmer NSFW",
+        menuName = "Gifs",
+        priority = 100,
+        enabledByDefault = false,
+        emotes = {
+            {
+                key = "femboi",
+                texture = "Interface\\AddOns\\ShimmerTime\\Gifs\\femboi.tga",
+                frames = {
+                    "Interface\\AddOns\\ShimmerTime\\Gifs\\femboi_01.tga",
+                    "Interface\\AddOns\\ShimmerTime\\Gifs\\femboi_02.tga",
+                    "Interface\\AddOns\\ShimmerTime\\Gifs\\femboi_03.tga",
+                    "Interface\\AddOns\\ShimmerTime\\Gifs\\femboi_04.tga",
+                    "Interface\\AddOns\\ShimmerTime\\Gifs\\femboi_05.tga",
+                    "Interface\\AddOns\\ShimmerTime\\Gifs\\femboi_06.tga",
+                    "Interface\\AddOns\\ShimmerTime\\Gifs\\femboi_07.tga",
+                    "Interface\\AddOns\\ShimmerTime\\Gifs\\femboi_08.tga",
+                    "Interface\\AddOns\\ShimmerTime\\Gifs\\femboi_09.tga",
+                    "Interface\\AddOns\\ShimmerTime\\Gifs\\femboi_10.tga",
+                    "Interface\\AddOns\\ShimmerTime\\Gifs\\femboi_11.tga",
+                    "Interface\\AddOns\\ShimmerTime\\Gifs\\femboi_12.tga",
+                    "Interface\\AddOns\\ShimmerTime\\Gifs\\femboi_13.tga",
+                    "Interface\\AddOns\\ShimmerTime\\Gifs\\femboi_14.tga",
+                    "Interface\\AddOns\\ShimmerTime\\Gifs\\femboi_15.tga",
+                    "Interface\\AddOns\\ShimmerTime\\Gifs\\femboi_16.tga",
+                    "Interface\\AddOns\\ShimmerTime\\Gifs\\femboi_17.tga",
+                    "Interface\\AddOns\\ShimmerTime\\Gifs\\femboi_18.tga",
+                    "Interface\\AddOns\\ShimmerTime\\Gifs\\femboi_19.tga",
+                    "Interface\\AddOns\\ShimmerTime\\Gifs\\femboi_20.tga",
+                    "Interface\\AddOns\\ShimmerTime\\Gifs\\femboi_21.tga",
+                    "Interface\\AddOns\\ShimmerTime\\Gifs\\femboi_22.tga",
+                    "Interface\\AddOns\\ShimmerTime\\Gifs\\femboi_23.tga",
+                    "Interface\\AddOns\\ShimmerTime\\Gifs\\femboi_24.tga",
+                    "Interface\\AddOns\\ShimmerTime\\Gifs\\femboi_25.tga",
+                    "Interface\\AddOns\\ShimmerTime\\Gifs\\femboi_26.tga",
+                    "Interface\\AddOns\\ShimmerTime\\Gifs\\femboi_27.tga",
+                    "Interface\\AddOns\\ShimmerTime\\Gifs\\femboi_28.tga",
+                },
+                frameDuration = 0.08,
+            },
         },
     },
 }
 
+for _, category in ipairs(DS.CATEGORIES) do
+    if category.emotes then
+        table.sort(category.emotes, function(a, b)
+            return (a.key or "") < (b.key or "")
+        end)
+    end
+end

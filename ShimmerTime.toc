@@ -2,7 +2,7 @@
 ## Title: ShimmerTime
 ## Notes: ShimmerTime Guild emote and fun
 ## Author: Gabbee-Thrall
-## Version: 1.1.1
+## Version: 2.0
 ## IconTexture: Interface\AddOns\ShimmerTime\Emotes\icon
 ## SavedVariables: ShimmerTimeDB, ShimmerDB
 

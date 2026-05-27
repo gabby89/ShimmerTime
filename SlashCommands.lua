@@ -44,13 +44,23 @@ local function SendRandomShimmerQuote()
     end
 end
 
+local function AreFunSlashCommandsEnabled()
+    return ShimmerTimeDB and ShimmerTimeDB.enableSlashCommands == true
+end
+
+local function PrintSlashCommandsDisabled()
+    print("|cffffd100ShimmerTime:|r slash commands are disabled. Turn on Slash Commands in /shimmer options.")
+end
+
 local function ResetDefaults()
     ShimmerTimeDB = ShimmerTimeDB or {}
     ShimmerTimeDB.emoteSize = DS.DEFAULT_EMOTE_SIZE
     ShimmerTimeDB.minimapAngle = 225
+    ShimmerTimeDB.showMinimapButton = true
     ShimmerTimeDB.showEmotesInBubbles = false
     ShimmerTimeDB.showGifsInBubbles = false
     ShimmerTimeDB.playEmoteSounds = false
+    ShimmerTimeDB.enableSlashCommands = false
 
     ShimmerTimeDB.enabledSections = {}
     if DS.CATEGORIES then
@@ -70,6 +80,9 @@ local function ResetDefaults()
     if DS.UpdateMinimapButtonPosition then
         DS.UpdateMinimapButtonPosition()
     end
+    if DS.RefreshMinimapButtonVisibility then
+        DS.RefreshMinimapButtonVisibility()
+    end
 end
 
 local function RegisterSlashCommands()
@@ -80,7 +93,11 @@ local function RegisterSlashCommands()
         msg = (msg or ""):lower():match("^%s*(.-)%s*$")
 
         if msg == "" then
-            PlaySoundFile(DS.SHIMMER_SOUND, "Master")
+            if AreFunSlashCommandsEnabled() then
+                PlaySoundFile(DS.SHIMMER_SOUND, "Master")
+            else
+                PrintSlashCommandsDisabled()
+            end
         elseif msg == "options" or msg == "config" then
             DS.OpenOptions()
         elseif msg == "reset" then
@@ -93,6 +110,8 @@ local function RegisterSlashCommands()
             print("/shimmer reset - reset addon settings to defaults")
             print("/shimmer help - show this help message")
             print("/shimmerquote - send a random Shimmer out-of-context quote")
+            print("/cottagecheese - play the cottage cheese sound")
+            print("Enable fun slash commands in /shimmer options > Misc > Slash Commands.")
         else
             print("|cffffd100ShimmerTime:|r unknown command. Use /shimmer help")
         end
@@ -100,7 +119,20 @@ local function RegisterSlashCommands()
 
     SLASH_SHIMMERQUOTE1 = "/shimmerquote"
     SlashCmdList["SHIMMERQUOTE"] = function()
-        SendRandomShimmerQuote()
+        if AreFunSlashCommandsEnabled() then
+            SendRandomShimmerQuote()
+        else
+            PrintSlashCommandsDisabled()
+        end
+    end
+
+    SLASH_COTTAGECHEESE1 = "/cottagecheese"
+    SlashCmdList["COTTAGECHEESE"] = function()
+        if AreFunSlashCommandsEnabled() then
+            PlaySoundFile(DS.COTTAGE_CHEESE_SOUND, "Master")
+        else
+            PrintSlashCommandsDisabled()
+        end
     end
 end
 

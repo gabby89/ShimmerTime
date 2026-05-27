@@ -1,4 +1,4 @@
-# ShimmerTime v1.1.1
+# ShimmerTime v2.0
 
 Overview
 --------
